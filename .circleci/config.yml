@@ -6,26 +6,34 @@ jobs:
       - image: circleci/python:3.8
     steps:
       - checkout
+
+      # Step 1: Install dependencies
       - run:
           name: Install dependencies
           command: pip install flask scikit-learn joblib
+
+      # Step 2: Setup remote Docker
       - setup_remote_docker:
           version: default
+
+      # Step 3: Build Docker image
       - run:
           name: Build Docker image
           command: docker build -t mlapp:latest .
 
+      # Step 4: Install AWS CLI
       - run:
-        name: Install AWS CLI
-        command: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+          name: Install AWS CLI
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y awscli
 
+      # Step 5: Upload code to S3 bucket 'codebucket-ml-app'
       - run:
           name: Upload code to S3
           command: |
             aws s3 cp . s3://codebucket-ml-app/ --recursive
-          
+
   deploy_to_ec2:
     docker:
       - image: circleci/python:3.8  # Image with Python for AWS CLI
@@ -64,5 +72,3 @@ workflows:
       - deploy_to_ec2:
           requires:
             - build
-
-            
