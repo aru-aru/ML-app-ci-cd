@@ -21,13 +21,25 @@ jobs:
       - image: circleci/python:3.8  # Image with Python for AWS CLI
     steps:
       - checkout
+
+      # Step 1: Create SSH directory and save SSH key from environment variable
       - run:
-          name: Install AWS CLI
-          command: sudo apt-get update && sudo apt-get install -y awscli
+          name: Save SSH key
+          command: |
+            mkdir -p ~/.ssh
+            echo "$AWS_SSH_KEY" > ~/.ssh/aws_key.pem
+            chmod 400 ~/.ssh/aws_key.pem  # Set the correct permissions for the SSH key
+
+      # Step 2: Add the EC2 instance to known hosts using the EC2_PUBLIC_IP environment variable
+      - run:
+          name: Add EC2 to known hosts
+          command: ssh-keyscan -H $EC2_PUBLIC_IP >> ~/.ssh/known_hosts
+
+      # Step 3: SSH into EC2 and deploy the app using the EC2_PUBLIC_IP environment variable
       - run:
           name: SSH to EC2 and Deploy App
           command: |
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@<YOUR_EC2_PUBLIC_IP> <<EOF
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@$EC2_PUBLIC_IP <<EOF
               docker pull mlapp:latest
               docker stop mlapp || true
               docker rm mlapp || true
