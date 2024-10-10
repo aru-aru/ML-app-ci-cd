@@ -61,7 +61,7 @@ jobs:
       - run:
           name: Update ECS Service
           command: |
-            aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
+            aws ecs update-service --cluster mlappdev --service mlappdev --force-new-deployment
 
   # deploy_to_ec2:
   #   docker:
@@ -98,6 +98,6 @@ workflows:
   build_and_deploy:
     jobs:
       - build
-      - deploy_to_ec2:
+      - deploy_to_ecs:
           requires:
             - build
