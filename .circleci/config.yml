@@ -32,22 +32,22 @@ jobs:
       - run:
           name: Upload code to S3
           command: |
-            aws s3 cp . s3://codebucket-ml-app/ --recursive
+            aws s3 cp . s3://codebucket-ml-app1/ --recursive
 
       - run:
           name: Authenticate Docker with ECR
           command: |
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 058264295383.dkr.ecr.us-east-1.amazonaws.com
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 637423283928.dkr.ecr.us-east-1.amazonaws.com
 
       
       - run:
           name: Tag Docker Image for ECR
-          command: docker tag mlapp:latest 058264295383.dkr.ecr.us-east-1.amazonaws.com/mlapp:latest
+          command: docker tag mlapp:latest 637423283928.dkr.ecr.us-east-1.amazonaws.com/mlapp:latest
 
       # Step 7: Push Docker image to ECR
       - run:
           name: Push Docker Image to ECR
-          command: docker push 058264295383.dkr.ecr.us-east-1.amazonaws.com/mlapp:latest
+          command: docker push 637423283928.dkr.ecr.us-east-1.amazonaws.com/mlapp:latest
 
   deploy_to_ecs:
     docker:
