@@ -1,0 +1,44 @@
+version: 2.1
+
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install flask scikit-learn joblib
+      - run:
+          name: Test app
+          command: python -c "import joblib; model = joblib.load('model.pkl'); print('Model loaded successfully')"
+      - run:
+          name: Build Docker image
+          command: docker build -t mlapp:latest .
+
+  deploy_to_ec2:
+    docker:
+      - image: circleci/python:3.8  # Image with Python for AWS CLI
+    steps:
+      - checkout
+      - run:
+          name: Install AWS CLI
+          command: sudo apt-get update && sudo apt-get install -y awscli
+      - run:
+          name: SSH to EC2 and Deploy App
+          command: |
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@<YOUR_EC2_PUBLIC_IP> <<EOF
+              docker pull mlapp:latest
+              docker stop mlapp || true
+              docker rm mlapp || true
+              docker run -d -p 80:5000 --name mlapp mlapp:latest
+            EOF
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy_to_ec2:
+          requires:
+            - build
