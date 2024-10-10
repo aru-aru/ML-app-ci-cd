@@ -37,42 +37,61 @@ jobs:
       
       - run:
           name: Tag Docker Image for ECR
-          command: docker tag mlapp:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/mlapp:latest
+          command: docker tag mlapp:latest 058264295383.dkr.ecr.us-east-1.amazonaws.com/mlapp:latest
 
       # Step 7: Push Docker image to ECR
       - run:
           name: Push Docker Image to ECR
-          command: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/mlapp:latest
+          command: docker push 058264295383.dkr.ecr.us-east-1.amazonaws.com/mlapp:latest
 
-  deploy_to_ec2:
+  deploy_to_ecs:
     docker:
-      - image: circleci/python:3.8  # Image with Python for AWS CLI
+      - image: circleci/python:3.8
     steps:
       - checkout
 
-      # Step 1: Create SSH directory and save SSH key from environment variable
+      # Step 1: Install AWS CLI
       - run:
-          name: Save SSH key
+          name: Install AWS CLI
           command: |
-            mkdir -p ~/.ssh
-            echo "$AWS_SSH_KEY" > ~/.ssh/aws_key.pem
-            chmod 400 ~/.ssh/aws_key.pem  # Set the correct permissions for the SSH key
+            sudo apt-get update
+            sudo apt-get install -y awscli
 
-      # Step 2: Add the EC2 instance to known hosts using the EC2_PUBLIC_IP environment variable
+      # Step 2: Update ECS Service to Pull the Latest Docker Image from ECR
       - run:
-          name: Add EC2 to known hosts
-          command: ssh-keyscan -H $EC2_PUBLIC_IP >> ~/.ssh/known_hosts
-
-      # Step 3: SSH into EC2 and deploy the app using the EC2_PUBLIC_IP environment variable
-      - run:
-          name: SSH to EC2 and Deploy App
+          name: Update ECS Service
           command: |
-            ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@$EC2_PUBLIC_IP \<<EOF
-              docker pull mlapp:latest
-              docker stop mlapp || true
-              docker rm mlapp || true
-              docker run -d -p 80:5000 --name mlapp mlapp:latest
-            EOF
+            aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
+
+  # deploy_to_ec2:
+  #   docker:
+  #     - image: circleci/python:3.8  # Image with Python for AWS CLI
+  #   steps:
+  #     - checkout
+
+  #     # Step 1: Create SSH directory and save SSH key from environment variable
+  #     - run:
+  #         name: Save SSH key
+  #         command: |
+  #           mkdir -p ~/.ssh
+  #           echo "$AWS_SSH_KEY" > ~/.ssh/aws_key.pem
+  #           chmod 400 ~/.ssh/aws_key.pem  # Set the correct permissions for the SSH key
+
+  #     # Step 2: Add the EC2 instance to known hosts using the EC2_PUBLIC_IP environment variable
+  #     - run:
+  #         name: Add EC2 to known hosts
+  #         command: ssh-keyscan -H $EC2_PUBLIC_IP >> ~/.ssh/known_hosts
+
+  #     # Step 3: SSH into EC2 and deploy the app using the EC2_PUBLIC_IP environment variable
+  #     - run:
+  #         name: SSH to EC2 and Deploy App
+  #         command: |
+  #           ssh -T -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@$EC2_PUBLIC_IP \<<EOF
+  #             docker pull mlapp:latest
+  #             docker stop mlapp || true
+  #             docker rm mlapp || true
+  #             docker run -d -p 80:5000 --name mlapp mlapp:latest
+  #           EOF
 
 workflows:
   version: 2
