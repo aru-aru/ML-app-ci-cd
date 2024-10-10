@@ -34,6 +34,16 @@ jobs:
           command: |
             aws s3 cp . s3://codebucket-ml-app/ --recursive
 
+      
+      - run:
+          name: Tag Docker Image for ECR
+          command: docker tag mlapp:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/mlapp:latest
+
+      # Step 7: Push Docker image to ECR
+      - run:
+          name: Push Docker Image to ECR
+          command: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/mlapp:latest
+
   deploy_to_ec2:
     docker:
       - image: circleci/python:3.8  # Image with Python for AWS CLI
