@@ -39,7 +39,7 @@ jobs:
       - run:
           name: SSH to EC2 and Deploy App
           command: |
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@$EC2_PUBLIC_IP <<EOF
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/aws_key.pem ubuntu@$EC2_PUBLIC_IP \<<EOF
               docker pull mlapp:latest
               docker stop mlapp || true
               docker rm mlapp || true
