@@ -34,6 +34,11 @@ jobs:
           command: |
             aws s3 cp . s3://codebucket-ml-app/ --recursive
 
+      - run:
+          name: Authenticate Docker with ECR
+          command: |
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 058264295383.dkr.ecr.us-east-1.amazonaws.com
+
       
       - run:
           name: Tag Docker Image for ECR
